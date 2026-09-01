@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aventura de Comunicación - 2.º Primaria</title>
+<style>
+  :root{
+    --bg1:#6dd5ed; --bg2:#2193b0; --card:#ffffff; --ink:#17324d;
+    --good:#2dbb70; --bad:#ef5b5b; --yellow:#ffd85a; --purple:#7a63ff;
+    --soft:#eef8ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:"Trebuchet MS", Arial, sans-serif; color:var(--ink);
+    min-height:100vh; background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    overflow-x:hidden;
+  }
+  .bubbles{position:fixed; inset:0; pointer-events:none; overflow:hidden; opacity:.22}
+  .bubble{position:absolute; border-radius:50%; background:white; animation:float 10s linear infinite}
+  @keyframes float{from{transform:translateY(110vh)} to{transform:translateY(-20vh)}}
+  .app{max-width:1000px; margin:0 auto; padding:18px}
+  .topbar{
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center;
+    background:rgba(255,255,255,.9); padding:12px 16px; border-radius:20px; box-shadow:0 8px 24px #0002;
+  }
+  .brand{font-size:1.3rem; font-weight:900}
+  .stats{display:flex; gap:10px; flex-wrap:wrap}
+  .pill{background:var(--soft); border-radius:999px; padding:8px 12px; font-weight:800}
+  .screen{
+    margin-top:18px; background:rgba(255,255,255,.96); border-radius:28px; padding:26px;
+    box-shadow:0 14px 40px #0003; min-height:610px;
+  }
+  h1{font-size:clamp(2rem,5vw,3.6rem); margin:8px 0 12px}
+  h2{font-size:clamp(1.6rem,4vw,2.5rem); margin:4px 0 16px}
+  .hero{text-align:center; padding:30px 10px}
+  .mascot{font-size:6rem; filter:drop-shadow(0 8px 10px #0002); animation:bob 2s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-8px)}}
+  .subtitle{font-size:1.2rem; line-height:1.5; max-width:720px; margin:0 auto 24px}
+  button{
+    border:0; border-radius:18px; padding:15px 20px; font-size:1.05rem; font-weight:900; cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,.12); transition:.15s transform,.15s filter;
+  }
+  button:hover{transform:translateY(-2px); filter:brightness(1.03)}
+  button:active{transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.12)}
+  .primary{background:var(--yellow); color:#473b00}
+  .secondary{background:#dff3ff; color:#164a66}
+  .voice{background:#efeaff; color:#493bb6}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px}
+  .world{
+    background:linear-gradient(180deg,#fff,#f6fbff); border:3px solid #d7efff; border-radius:22px;
+    padding:18px; min-height:150px; text-align:left;
+  }
+  .world .icon{font-size:2.3rem}
+  .world strong{display:block; margin:8px 0; font-size:1.2rem}
+  .questionBox{
+    background:linear-gradient(180deg,#f8fcff,#eef8ff); border:3px solid #d5edff;
+    border-radius:24px; padding:22px; margin:18px 0;
+  }
+  .prompt{font-size:1.55rem; line-height:1.35; font-weight:900; text-align:center}
+  .options{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-top:20px}
+  .option{background:white; border:3px solid #dcecff; min-height:66px}
+  .option.good{background:#ddf8e9; border-color:var(--good)}
+  .option.bad{background:#ffe4e4; border-color:var(--bad)}
+  .feedback{
+    min-height:54px; margin-top:18px; font-size:1.25rem; font-weight:900; text-align:center;
+  }
+  .progress{height:16px; background:#dbefff; border-radius:20px; overflow:hidden; margin:14px 0 4px}
+  .bar{height:100%; width:0%; background:linear-gradient(90deg,#7a63ff,#2dbb70); transition:.35s}
+  .poster{
+    max-width:600px; margin:10px auto; background:#fff6d7; border:5px solid #4da6ff; border-radius:24px;
+    padding:20px; text-align:center; box-shadow:0 8px 16px #0002;
+  }
+  .poster-title{font-size:2rem; font-weight:900; color:#0f5e9c}
+  .poster-img{font-size:5rem; margin:10px}
+  .poster-info{font-size:1.05rem; margin:8px 0}
+  .poster-slogan{font-size:1.35rem; font-weight:900; color:#168254; margin:10px 0}
+  .tag{display:inline-block; background:#fff; border-radius:12px; padding:7px 10px; margin:4px; font-weight:800}
+  .ending{text-align:center; padding:35px 10px}
+  .stars{font-size:3rem; letter-spacing:6px}
+  .tiny{font-size:.95rem; opacity:.75}
+  .hidden{display:none!important}
+  .footerBtns{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:18px}
+  @media(max-width:600px){
+    .screen{padding:18px; border-radius:20px; min-height:560px}
+    .prompt{font-size:1.25rem}
+  }
+</style>
+</head>
+<body>
+<div class="bubbles" id="bubbles"></div>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">🎮 Aventura de Comunicación</div>
+    <div class="stats">
+      <div class="pill">⭐ <span id="score">0</span></div>
+      <div class="pill">🏆 Nivel <span id="levelNum">0</span>/6</div>
+      <div class="pill">🔊 Voz <span id="voiceState">ON</span></div>
+    </div>
+  </div>
+
+  <main class="screen" id="screen"></main>
+</div>
+
+<script>
+const screen = document.getElementById("screen");
+const scoreEl = document.getElementById("score");
+const levelNumEl = document.getElementById("levelNum");
+const voiceStateEl = document.getElementById("voiceState");
+
+let score = 0, level = 0, qIndex = 0, voiceOn = true, locked = false;
+let audioCtx;
+
+const worlds = [
+  {name:"El afiche", icon:"🪧"},
+  {name:"C o S", icon:"🔤"},
+  {name:"Adjetivos", icon:"🎨"},
+  {name:"Género", icon:"👧👦"},
+  {name:"Número", icon:"1️⃣🔢"},
+  {name:"Concordancia", icon:"🏆"}
+];
+
+const questions = [
+[
+ {type:"poster", prompt:"¿Cuál es el TÍTULO del afiche?", options:["¡Gran inauguración del acuario!","¡Conoce, aprende y protege!","10:00 a. m."], answer:0},
+ {type:"poster", prompt:"¿Cuál es el ESLOGAN?", options:["Acuario Natural","¡Conoce, aprende y protege!","25 de mayo"], answer:1},
+ {type:"poster", prompt:"¿Qué parte indica CUÁNDO se realizará?", options:["Fecha","Imagen","Título"], answer:0},
+ {type:"poster", prompt:"¿Qué parte indica A QUÉ HORA se realizará?", options:["Datos informativos","Hora","Eslogan"], answer:1},
+ {type:"poster", prompt:"¿Qué parte indica DÓNDE se realizará?", options:["Lugar","Fecha","Imagen"], answer:0},
+ {type:"poster", prompt:"¿Qué elemento llama la atención con un dibujo o fotografía?", options:["Imagen","Hora","Fecha"], answer:0},
+ {type:"poster", prompt:"¿Qué parte explica información importante del evento?", options:["Datos informativos","Lugar","Eslogan"], answer:0}
+],
+[
+ {prompt:"Completa: educa__ión", options:["C","S"], answer:0, explain:"Las palabras terminadas en -ción se escriben con C."},
+ {prompt:"Completa: hermo__o", options:["C","S"], answer:1, explain:"Las palabras terminadas en -oso se escriben con S."},
+ {prompt:"Completa: distan__ia", options:["C","S"], answer:0, explain:"Las palabras terminadas en -cia se escriben con C."},
+ {prompt:"Completa: cicli__ta", options:["C","S"], answer:1, explain:"Las palabras terminadas en -ista se escriben con S."},
+ {prompt:"Completa: espa__io", options:["C","S"], answer:0, explain:"Las palabras terminadas en -cio se escriben con C."},
+ {prompt:"Completa: turi__mo", options:["C","S"], answer:1, explain:"Las palabras terminadas en -ismo se escriben con S."},
+ {prompt:"Completa: superfi__ie", options:["C","S"], answer:0, explain:"Las palabras terminadas en -cie se escriben con C."},
+ {prompt:"Completa: cariño__a", options:["C","S"], answer:1, explain:"Las palabras terminadas en -osa se escriben con S."}
+],
+[
+ {prompt:"¿Cuál es el adjetivo? «La tortuga pequeña nada.»", options:["tortuga","pequeña","nada"], answer:1},
+ {prompt:"¿Cuál es el adjetivo? «El pez azul nada rápido.»", options:["pez","azul","nada"], answer:1},
+ {prompt:"¿Qué palabra describe al sustantivo? «La niña alegre canta.»", options:["niña","alegre","canta"], answer:1},
+ {prompt:"Elige un adjetivo para «perro».", options:["juguetón","corre","parque"], answer:0},
+ {prompt:"¿Cuál palabra nos dice cómo es la flor?", options:["hermosa","crece","jardín"], answer:0}
+],
+[
+ {prompt:"«La gata blanca» está en género...", options:["Masculino","Femenino"], answer:1},
+ {prompt:"«El caballo veloz» está en género...", options:["Masculino","Femenino"], answer:0},
+ {prompt:"¿Cuál es femenino?", options:["niño alegre","niña alegre"], answer:1},
+ {prompt:"¿Cuál es masculino?", options:["perro pequeño","perra pequeña"], answer:0},
+ {prompt:"Completa: «La tortuga es...»", options:["lenta","lento"], answer:0}
+],
+[
+ {prompt:"«Las tortugas verdes» está en...", options:["Singular","Plural"], answer:1},
+ {prompt:"«El pez pequeño» está en...", options:["Singular","Plural"], answer:0},
+ {prompt:"¿Cuál es el plural de «la flor bonita»?", options:["las flores bonitas","la flores bonita","los flor bonitos"], answer:0},
+ {prompt:"¿Cuál es el singular de «los gatos negros»?", options:["el gato negro","la gata negra","el gatos negro"], answer:0},
+ {prompt:"¿Cuál está en plural?", options:["pelota roja","pelotas rojas"], answer:1}
+],
+[
+ {prompt:"Completa correctamente: «Las tortugas son...»", options:["pequeña","pequeñas","pequeño"], answer:1},
+ {prompt:"Elige la oración correcta.", options:["El perro juguetona.","El perro juguetón.","La perro juguetón."], answer:1},
+ {prompt:"Elige la oración correcta.", options:["Las flores amarillas.","Las flores amarillo.","Los flores amarillas."], answer:0},
+ {prompt:"Completa: «La mariposa es...»", options:["hermoso","hermosa","hermosos"], answer:1},
+ {prompt:"Completa: «Los peces son...»", options:["azul","azules","azula"], answer:1}
+]
+];
+
+function bubbles(){
+  const b = document.getElementById("bubbles");
+  for(let i=0;i<18;i++){
+    const d=document.createElement("div");
+    d.className="bubble";
+    const s=10+Math.random()*50;
+    d.style.width=d.style.height=s+"px";
+    d.style.left=Math.random()*100+"%";
+    d.style.animationDuration=(7+Math.random()*9)+"s";
+    d.style.animationDelay=(-Math.random()*10)+"s";
+    b.appendChild(d);
+  }
+}
+bubbles();
+
+function speak(text){
+  if(!voiceOn || !("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text.replace(/[⭐🏆🎮🪧🔤🎨👧👦1️⃣🔢]/g,""));
+  u.lang="es-PE"; u.rate=.92; u.pitch=1.05;
+  speechSynthesis.speak(u);
+}
+
+function beep(ok=true){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value=ok?660:220; g.gain.value=.08;
+    o.start();
+    setTimeout(()=>{o.frequency.value=ok?880:180},100);
+    setTimeout(()=>{o.stop()},220);
+  }catch(e){}
+}
+
+function toggleVoice(){
+  voiceOn=!voiceOn;
+  voiceStateEl.textContent=voiceOn?"ON":"OFF";
+  if(!voiceOn && speechSynthesis) speechSynthesis.cancel();
+}
+
+function home(){
+  level=0; qIndex=0; levelNumEl.textContent=0;
+  screen.innerHTML=`
+    <section class="hero">
+      <div class="mascot">🐢📚</div>
+      <h1>La Aventura de las Palabras</h1>
+      <p class="subtitle">Practica Comunicación de 2.º de primaria con 6 mundos, preguntas, sonidos, voz y estrellas.</p>
+      <button class="primary" onclick="showWorlds()">▶ JUGAR</button>
+      <button class="voice" onclick="toggleVoice()">🔊 Activar / desactivar voz</button>
+      <p class="tiny">Consejo: usa Chrome o Edge y permite el sonido.</p>
+    </section>`;
+  speak("¡Hola! Bienvenido a La Aventura de las Palabras. Presiona jugar para comenzar.");
+}
+
+function showWorlds(){
+  screen.innerHTML=`
+    <h2>🌟 Elige un mundo para practicar</h2>
+    <div class="grid">
+      ${worlds.map((w,i)=>`<button class="world" onclick="startLevel(${i})"><span class="icon">${w.icon}</span><strong>Mundo ${i+1}</strong>${w.name}</button>`).join("")}
+    </div>
+    <div class="footerBtns"><button class="secondary" onclick="home()">🏠 Inicio</button></div>`;
+  speak("Elige un mundo para practicar.");
+}
+
+function startLevel(i){
+  level=i+1; qIndex=0; locked=false;
+  levelNumEl.textContent=level;
+  renderQuestion();
+}
+
+function posterHTML(){
+ return `<div class="poster">
+   <div class="poster-title">🐢 ¡GRAN INAUGURACIÓN DEL ACUARIO! 🐢</div>
+   <div class="poster-img">🐢🌊🐠</div>
+   <div class="poster-info"><b>Datos informativos:</b> Ven a conocer sorprendentes tortugas africanas y aprende cómo cuidarlas.</div>
+   <div class="poster-slogan">¡Conoce, aprende y protege!</div>
+   <span class="tag">📅 Fecha: 25 de mayo</span>
+   <span class="tag">🕙 Hora: 10:00 a. m.</span>
+   <span class="tag">📍 Lugar: Acuario Natural</span>
+ </div>`;
+}
+
+function renderQuestion(){
+  locked=false;
+  const arr=questions[level-1], q=arr[qIndex];
+  const pct=(qIndex/arr.length)*100;
+  screen.innerHTML=`
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+      <h2>${worlds[level-1].icon} Mundo ${level}: ${worlds[level-1].name}</h2>
+      <button class="voice" onclick="speakCurrent()">🔊 Escuchar</button>
+    </div>
+    <div class="progress"><div class="bar" style="width:${pct}%"></div></div>
+    <div class="tiny">Pregunta ${qIndex+1} de ${arr.length}</div>
+    ${q.type==="poster"?posterHTML():""}
+    <div class="questionBox">
+      <div class="prompt">${q.prompt}</div>
+      <div class="options">
+        ${q.options.map((op,i)=>`<button class="option" id="op${i}" onclick="answer(${i})">${op}</button>`).join("")}
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <div class="footerBtns">
+      <button class="secondary" onclick="showWorlds()">⬅ Mundos</button>
+    </div>`;
+  speak(q.prompt);
+}
+
+function speakCurrent(){
+  const q=questions[level-1][qIndex];
+  let text=q.prompt + ". Opciones: " + q.options.join(", ");
+  speak(text);
+}
+
+function answer(i){
+  if(locked) return;
+  locked=true;
+  const q=questions[level-1][qIndex];
+  const fb=document.getElementById("feedback");
+  const btn=document.getElementById("op"+i);
+  const correct=document.getElementById("op"+q.answer);
+  if(i===q.answer){
+    btn.classList.add("good");
+    score+=10; scoreEl.textContent=score;
+    fb.innerHTML="✅ ¡Excelente! +10 estrellas";
+    beep(true); speak("¡Excelente! Respuesta correcta.");
+  }else{
+    btn.classList.add("bad"); correct.classList.add("good");
+    fb.innerHTML="💡 Casi. La respuesta correcta es: <b>"+q.options[q.answer]+"</b>"+(q.explain?"<br><span class='tiny'>"+q.explain+"</span>":"");
+    beep(false); speak("Casi. La respuesta correcta es " + q.options[q.answer] + (q.explain? ". "+q.explain:""));
+  }
+  setTimeout(()=>{
+    qIndex++;
+    if(qIndex>=questions[level-1].length) finishLevel();
+    else renderQuestion();
+  },1800);
+}
+
+function finishLevel(){
+  const max=questions[level-1].length*10;
+  screen.innerHTML=`
+    <section class="ending">
+      <div class="mascot">🏆🐢</div>
+      <h1>¡Mundo completado!</h1>
+      <div class="stars">⭐⭐⭐</div>
+      <p class="subtitle">Terminaste <b>${worlds[level-1].name}</b>. ¡Muy buen trabajo!</p>
+      <button class="primary" onclick="nextLevel()">➡ Siguiente mundo</button>
+      <button class="secondary" onclick="showWorlds()">🗺 Elegir otro mundo</button>
+    </section>`;
+  speak("¡Muy buen trabajo! Has completado este mundo.");
+}
+
+function nextLevel(){
+  if(level<6) startLevel(level);
+  else finalScreen();
+}
+
+function finalScreen(){
+  screen.innerHTML=`
+    <section class="ending">
+      <div class="mascot">🎓🌟🐢</div>
+      <h1>¡MISIÓN COMPLETADA!</h1>
+      <div class="stars">⭐⭐⭐</div>
+      <p class="subtitle">Puntaje total: <b>${score} estrellas</b><br>¡Ya estás más preparado para tu examen de Comunicación!</p>
+      <button class="primary" onclick="restart()">🔁 Jugar otra vez</button>
+      <button class="secondary" onclick="showWorlds()">🗺 Practicar un tema</button>
+    </section>`;
+  speak("¡Misión completada! Felicitaciones. Has terminado todos los mundos.");
+}
+
+function restart(){
+  score=0; scoreEl.textContent=0; home();
+}
+
+home();
+</script>
+</body>
+</html>
